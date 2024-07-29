@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>DevExtreme jQuery Example</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="dx.fluent.blue.light.css">
+
+    <script type="text/javascript" src="jquery.js"></script>
+    <script type="text/javascript" src="dx.all.debug.js" charset="utf-8"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="dx-surface">
+    <div role="main">
+        <h1 style="position: fixed; left: 0; top: 0; clip: rect(1px, 1px, 1px, 1px);">Test header</h1>
+
+        <div id="chat"></div>
+
+        <script>
+            const MOCK_CHAT_HEADER_TEXT = 'CHAT TITLE';
+            const id = Math.random()
+            const user = {
+                id,
+                name: `User id: ${id}`,
+            }
+
+            const now = Date.now()
+
+            $(() => {
+                const socket = io();
+
+                const instance = $("#chat").dxChat({
+                    title: MOCK_CHAT_HEADER_TEXT,
+                    user,
+                    onMessageSend: (e) => {
+                        socket.emit('chat message', e.message);
+                    }
+                }).dxChat('instance');
+
+                socket.on('chat message', function(e) {
+                    if (e.author.id !== id) {
+                        instance.renderMessage(e, e.author);
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>
