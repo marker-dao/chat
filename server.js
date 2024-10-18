@@ -16,14 +16,20 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
-  
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
+  socket.on('message', (msg) => {
+    socket.broadcast.emit('message', msg);
   });
 
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg);
+  socket.on('typingstart', (e) => {
+    socket.broadcast.emit('typingstart', e);
+  });
+
+  socket.on('typingend', (e) => {
+    socket.broadcast.emit('typingend', e);
+  });
+
+  socket.on('disconnect', (e) => {
+    io.emit('typingend', e, socket.id);
   });
 });
 

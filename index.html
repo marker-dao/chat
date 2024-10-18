@@ -18,31 +18,69 @@
         <div id="chat"></div>
 
         <script>
-            const MOCK_CHAT_HEADER_TEXT = 'CHAT TITLE';
-            const id = Math.random()
+            const id = String(Math.random())
             const user = {
                 id,
-                name: `User id: ${id}`,
+                name: `Pasha ${id.substring(0, 4)}`,
+            }
+            const items = [
+                {
+                    timestamp: new Date(2021, 9, 17, 14, 15),
+                    author: {
+                        id: 1,
+                        name: 'James Paul',
+                    },
+                    text: 'app.use(express.static(path.join(__dirname, \'./public\')));',
+                },
+            ];
+
+            const typingStatuses = {}
+
+            const addOrUpdateStatus = (e) => {
+                typingStatuses[e.user.id] = e
             }
 
-            const now = Date.now()
+            const removeStatus = (e) => {
+                e?.user?.id && delete typingStatuses[e.user.id]
+            }
 
             $(() => {
                 const socket = io();
 
                 const instance = $("#chat").dxChat({
-                    title: MOCK_CHAT_HEADER_TEXT,
+                    height: 500,
+                    items,
                     user,
                     onMessageSend: (e) => {
-                        socket.emit('chat message', e.message);
-                    }
-                }).dxChat('instance');
+                        e.component.renderMessage(e.message)
 
-                socket.on('chat message', function(e) {
-                    if (e.author.id !== id) {
-                        instance.renderMessage(e, e.author);
-                    }
-                });
+                        socket.emit('message', e.message)
+                    },
+                    onTypingStart: ({ user }) => {
+                        socket.emit('typingstart', { user })
+                    },
+                    onTypingEnd: ({ user }) => {
+                        socket.emit('typingend', { user })
+                    },
+                }).dxChat('instance')
+
+                /**
+                 * Sockets
+                 */
+                socket.on('message', function(message) {
+                    instance.renderMessage(message)
+                })
+                socket.on('typingstart', function(status) {
+                    addOrUpdateStatus(status)
+
+                    instance.option({ typingStatuses })
+                })
+                socket.on('typingend', function(status, id) {
+                    debugger
+                    removeStatus(status)
+
+                    instance.option({ typingStatuses })
+                })
             });
         </script>
     </div>
