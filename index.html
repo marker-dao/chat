@@ -76,7 +76,6 @@
                     instance.option({ typingStatuses })
                 })
                 socket.on('typingend', function(status, id) {
-                    debugger
                     removeStatus(status)
 
                     instance.option({ typingStatuses })
