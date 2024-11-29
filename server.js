@@ -1,38 +1,38 @@
 const path = require('node:path');
 
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const bodyParser = require('body-parser');
+const { detectIntent } = require('./dialogflow');
 
 const app = express();
+const port = 3000;
 
 app.use(express.static(path.join(__dirname, './public')));
 
-const server = http.createServer(app);
-const io = new Server(server);
+app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-io.on('connection', (socket) => {
-  socket.on('message', (msg) => {
-    socket.broadcast.emit('message', msg);
-  });
+app.post('/webhook', async (request, response) => {
+  const { message, sessionId } = request.body;
 
-  socket.on('typingstart', (e) => {
-    socket.broadcast.emit('typingstart', e);
-  });
+  if (!message || !sessionId) {
+    return response.status(400).json({ error: 'Message and sessionId are required' });
+  }
 
-  socket.on('typingend', (e) => {
-    socket.broadcast.emit('typingend', e);
-  });
+  try {
+    const result = await detectIntent(message, sessionId);
 
-  socket.on('disconnect', (e) => {
-    io.emit('typingend', e, socket.id);
-  });
+    response.json({ response: result });
+  } catch (error) {
+    console.error(error);
+
+    response.status(500).send('Error processing request');
+  }
 });
 
-server.listen(3000, () => {
-  console.log('server running at http://localhost:3000');
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });
